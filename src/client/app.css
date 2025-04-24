@@ -1,8 +1,38 @@
-h1 {
-  color: green;
-}
 
-body {
-  text-align: center;
-  margin: auto;
-}
+.app-background {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  header {
+    transition: background-image 1s ease-in-out;
+    border-bottom-left-radius: 16px;  
+    border-bottom-right-radius: 16px; 
+  }
+  .animated-bg {
+    animation: gradientChange 10s ease infinite;
+    background: linear-gradient(-45deg, #0f2027, #ccc4c4, #2c5364, #1c1c1c);
+    background-size: 400% 400%;
+    color: white;
+  }
+  
+  @keyframes gradientChange {
+    0% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+    100% {
+      background-position: 0% 50%;
+    }
+  }
+  .card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+  
+  .card:hover {
+    transform: translateY(-10px) scale(1.02);
+    box-shadow: 0 12px 20px rgba(0, 0, 0, 0.2);
+  }
