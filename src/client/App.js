@@ -1,22 +1,42 @@
-// the main component of the app
 import React, { useState, useEffect } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './app.css';
 
 function App() {
-   // state variables to hold data
+  // state variables to hold data
   const [ingredients, setIngredients] = useState('');
   const [recipes, setRecipes] = useState([]);
   const [loading, setLoading] = useState(false);
   const [foodImage, setFoodImage] = useState('');
   const [foodTypes, setFoodTypes] = useState([]);
   const [headerImage, setHeaderImage] = useState('');
-  const [selectedMeal, setSelectedMeal] = useState(null); 
-// state variable to hold the selected meal 
-  useEffect(() => {
-    document.body.style.overflow = selectedMeal ? 'hidden' : 'auto';
-  }, [selectedMeal]);
- // fetches random food image for the header
+  const [selectedMeal, setSelectedMeal] = useState(null);
+  const [searchTerm, setSearchTerm] = useState(''); // Add state for search term
+
+  // handle search by meal name
+  const handleMealSearch = async (e) => {
+    e.preventDefault();
+    if (!searchTerm) return;
+
+    setLoading(true);
+    try {
+      const response = await fetch(`https://www.themealdb.com/api/json/v1/1/search.php?s=${searchTerm}`);
+      const data = await response.json();
+
+      if (data.meals) {
+        setRecipes(data.meals);
+      } else {
+        setRecipes([]);
+      }
+    } catch (error) {
+      console.error('Error searching meals:', error);
+      setRecipes([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // fetches random food image for the header
   const fetchHeaderImage = async () => {
     try {
       const res = await fetch('https://foodish-api.com/api/');
@@ -26,7 +46,8 @@ function App() {
       console.error('Error fetching header image:', error);
     }
   };
-// fetches full recipe details (with ingredients)
+
+  // fetches full recipe details (with ingredients)
   const getFullMealDetails = async (id) => {
     try {
       const res = await fetch(`https://www.themealdb.com/api/json/v1/1/lookup.php?i=${id}`);
@@ -37,7 +58,8 @@ function App() {
       return null;
     }
   };
-// to fetch categoriesof of food 
+
+  // fetches categories of food
   useEffect(() => {
     const fetchFoodTypes = async () => {
       try {
@@ -48,7 +70,8 @@ function App() {
         console.error('Error fetching food types:', error);
       }
     };
-// fetches 10 random meals and retrieves full details (including ingredients)
+
+    // fetches 10 random meals and retrieves full details (including ingredients)
     const fetchRandomRecipes = async () => {
       setLoading(true);
       try {
@@ -68,7 +91,8 @@ function App() {
         setLoading(false);
       }
     };
- // fetches a random food image for fallback 
+
+    // fetches a random food image for fallback
     const fetchRandomFoodImage = async () => {
       try {
         const response = await fetch('https://www.themealdb.com/api/json/v1/1/random.php');
@@ -83,7 +107,8 @@ function App() {
     fetchRandomRecipes();
     fetchRandomFoodImage();
   }, []);
-// fetches a random food image for the header every 9 seconds
+
+  // fetches a random food image for the header every 9 seconds
   // and sets a delay of 2 seconds before the first fetch
   useEffect(() => {
     const fetchImageWithDelay = async () => {
@@ -100,7 +125,8 @@ function App() {
 
     return () => clearTimeout(delayInterval);
   }, []);
-// user clicks a food category to filter meals
+
+  // user clicks a food category to filter meals
   const handleFoodTypeClick = async (type) => {
     if (!type) return;
     setLoading(true);
@@ -125,14 +151,15 @@ function App() {
       setLoading(false);
     }
   };
-// handles ingredient-based recipe search
+
+  // handles ingredient-based recipe search
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!ingredients) return;
 
     setLoading(true);
     const ingredientsArray = ingredients.split(',').map(i => i.trim().toLowerCase()).filter(Boolean);
-// fetch recipes for each ingredient separately
+
     try {
       const mealsPerIngredient = [];
       for (let ingredient of ingredientsArray) {
@@ -140,12 +167,14 @@ function App() {
         const data = await response.json();
         mealsPerIngredient.push(data.meals || []);
       }
-// find common meals that contain all the input ingredients
+
+      // find common meals that contain all the input ingredients
       const commonMeals = mealsPerIngredient.reduce((acc, curr) => {
         const currMealIds = new Set(curr.map(meal => meal.idMeal));
         return acc.filter(meal => currMealIds.has(meal.idMeal));
       }, mealsPerIngredient[0] || []);
-// fetch full details for matched meals
+
+      // fetch full details for matched meals
       const fullDetails = await Promise.all(
         commonMeals.map(meal => getFullMealDetails(meal.idMeal))
       );
@@ -174,14 +203,14 @@ function App() {
         <h1 className="display-4 mb-2">What Can I Cook?</h1>
         <p className="lead mb-4">“Enter your ingredients. We’ll do the rest!”</p>
         <div className="container">
-          <form onSubmit={handleSubmit} className="row justify-content-center g-2">
+          <form onSubmit={handleMealSearch} className="row justify-content-center g-2">
             <div className="col-md-4">
               <input
                 type="text"
                 className="form-control form-control-lg"
-                placeholder="e.g. chicken, rice, tomato"
-                value={ingredients}
-                onChange={(e) => setIngredients(e.target.value)}
+                placeholder="Search for a meal (e.g., spaghetti)"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
             <div className="col-md-3">
@@ -200,7 +229,7 @@ function App() {
             </div>
             <div className="col-auto">
               <button type="submit" className="btn btn-light btn-lg shadow-sm">
-                {loading ? 'Searching...' : 'Search Recipes'}
+                {loading ? 'Searching...' : 'Search Meal'}
               </button>
             </div>
           </form>
@@ -295,4 +324,3 @@ function App() {
 }
 
 export default App;
-
